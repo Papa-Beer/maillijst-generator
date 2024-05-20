@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JULLIE WERKEN NIET generator</title>
+    <!-- Black -->
+    <link rel="icon" type="image/x-icon" href="https://images.operabase.com/image/upload/c_pad,w_32,h_32,q_100,b_auto,f_png,fl_progressive/bucket/companies/c2e959fc-71f5-4a3c-b515-80bca075aa60/de-nationale-opera-small.png">
+    <!-- White -->
+    <!-- <link rel="icon" type="image/x-icon" href="https://media.licdn.com/dms/image/D4E0BAQHQOBfgpZ-t4g/company-logo_200_200/0/1664525292414/nationale_opera__ballet_logo?e=2147483647&v=beta&t=Cb_C1fsM3xaRtSMXBjLmcP3JDt7gd5966RqE3jkHxMU"> -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<div class="inner-wrapper">
+    <div class="inner-inner-wrapper">
+        <h1>JULLIE WERKEN NIET Generator</h1>
+        <p>
+        <details>
+            <summary><b>Maillijst</b></summary>
+            <div class="content">
+                <p>Zoek in je mail naar "MAILLIJST [maand van de dienst]", selecteer de hele lijst e-mailadressen en plak deze hier.</p>
+            </div>
+            </details>
+        </p>
+        <textarea id="emailList" rows="10" style="width:100%;" overflow="auto" spellcheck="false"></textarea>
+        <br>
+        <br>
+        <p>
+            <details>
+                <summary><b>Poolmanager</b><a href="https://www.poolmanager.mobi/uiweb/Portal.aspx" class="external-link-icon" target="_blank">&#x1F517;&#xfe0e;</a></summary>
+                <div class="content">
+                    <p> Ga naar <b><nobr><a href="https://www.poolmanager.mobi/uiweb/Portal.aspx" target="_blank">Poolmanager</a></nobr></b> &#10148 <b><nobr>De dienst</nobr></b> &#10148 <b><nobr>Collega informatie.</nobr></b><br>
+                        Selecteer alles en copy-paste hier.<br>
+                        <br>
+                        Je kunt het link icoon &#x1F517;&#xfe0e; gebruiken om de Poolmanager te openen in een nieuw tabblad.<br>
+                        <br>
+                        <b>Let op!</b> Gebruik selecteer alles op zowel de mobiele als de desktop versie van de website, anders werkt het niet.<br>
+                        <br>
+                        Je doet dit door de tekst te selecteren en dan op <b>Ctrl+A</b> of <b>Cmd+A</b> te drukken.<br>
+                        <br>
+                        Op je mobiel selecteer je eerst een stukje tekst en dan de optie <b>alles selecteren</b>.
+                    </p>
+                </div>
+                </details>
+        </p>
+        <textarea id="workingCollList" rows="10" style="width:100%;" overflow="auto", spellcheck="false"></textarea>
+        <div style="margin:auto; display:flex; justify-content: center;">
+            <button onclick="generateList()">
+                <b>Genereer info</b>
+            </button>
+            <button onclick="setupDraft()">
+                <b>Maak draft</b>
+            </button>
+        </div>
+        <div id="warningBox" class="warningBox">
+            <div id="missingInfoBox" style="display: none;">
+                <b>De volgende informatie ontbreekt:</b>
+                <p id="missingInfo"></p>
+                <b>Vul deze zelf aan in je mail!</b>
+            </div>
+            <div id="missingEmailsBox" style="display: none;">
+                <b>Email niet gevonden in maillijst voor:</b>
+                <p id="missingEmails"></p>
+                <b>Verwijder deze zelf nog uit de lijst hieronder!</b><br>
+                Ze staan waarschijnlijk bovenaan de lijst.
+            </div>
+        </div>
+        <div id="generatedContent" class="generatedContent" style="display: none;">
+            <textarea id="title" rows="2" style="width:100%;" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
+                placeholder="Titel" spellcheck="false"></textarea>
+            <textarea id="displayList" rows="10" style="width:100%;" overflow="auto"
+                placeholder="E-mailadressen" spellcheck="false"></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateList() {
+    emails = document.getElementById("emailList").value;
+    collInfo = document.getElementById("workingCollList").value;
+    titleField = document.getElementById("title");
+    displayList = document.getElementById("displayList");
+    // Clear warning box
+    document.getElementById("warningBox").style.display = "none";
+    document.getElementById("generatedContent").style.display = "block";
+    document.getElementById("missingInfoBox").style.display = "none";
+    document.getElementById("missingEmailsBox").style.display = "none";
+    document.getElementById("missingInfo").innerHTML = "";
+    document.getElementById("missingEmails").innerHTML = "";
+
+    var emailArray = emailListToArray(emails);
+    var workingCollArray = workingCollListToArray(collInfo).filter(n => n);
+
+    var shiftInfo = workingCollArray.splice(0, workingCollArray.length - 1).join(" ")
+    var collNames = workingCollArray[0];
+
+    // console.log('collNames', collNames)
+    // console.log('emailArray', emailArray)
+
+    var notFound = []
+    var displayListText = "";
+    var notFoundList = [];
+    for (var workingColl of collNames) {
+        var found = false;
+        for (const email of emailArray) {
+            if (email[0].includes(workingColl.toLowerCase())) {
+                emailArray.splice(emailArray.indexOf(email), 1); // remove found email
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            notFound.push(workingColl);
+        }
+    }
+
+    // check for first and last name in email addresses that are left over
+    for (const coll of notFound) {
+        found = false;
+        firstName = coll.split(" ")[0];
+        lastName = coll.split(" ").pop();
+        console.log("not found", [firstName, lastName])
+        for (const email of emailArray) {
+            if (email[1].includes(firstName.toLowerCase())) { // if first name is found
+                if (email[1].includes(lastName.toLowerCase())) { // if both first and last name are found
+                    console.log("full match", email)
+                    found = true;
+                    emailArray.splice(emailArray.indexOf(email), 1); // remove found email
+                    break;
+                }
+                // add to front of list if only first name match was found
+                notFoundList.push(email[1]);
+                console.log("found first name match", email)
+                // remove found email
+                emailArray.splice(emailArray.indexOf(email), 1);
+            } if (email[1].includes(lastName.toLowerCase())) { // if last name is found
+                // add to front of list if only last name match was found
+                notFoundList.push(email[1]);
+                // remove found email
+                emailArray.splice(emailArray.indexOf(email), 1);
+            }
+        }
+        if (!found) {
+            setWarning(coll, true); // set warning for colleagues who's email was not found
+        }
+    }
+
+    // add emails with partial match to the list
+    for (const email of notFoundList) {
+        displayListText += email + ", ";
+    }
+
+    // add the rest of the emails to the list
+    for (const email of emailArray) {
+        displayListText += email[1] + ", ";
+        console.log("not found", email)
+    }
+
+    titleField.value = "JULLIE WERKEN NIET ".concat(shiftInfo);
+    displayList.value = displayListText;
+}
+
+function setupDraft() {
+    generateList();
+    var title = document.getElementById("title").value;
+    var displayList = document.getElementById("displayList").value;
+    let content = encodeURIComponent("\n\n\n\n\n\n Gemaakt met de maillijst generator.");
+    var draft = "mailto:" + displayList + "?subject=" + title + "&body=" + content;
+    window.open(draft, '_blank');
+}
+
+function workingCollListToArray(collInfo) {
+    // set to lowercase and split by newline
+    collInfo = collInfo.split("\n"); 
+    var date = "";
+    var startTime = "";
+    var endTime = "";
+    var shift = "";
+    var show = "";
+    var time = "";
+
+    // Extract date, time and shift if available
+    dateIndex = collInfo.indexOf("Datum"); // indexOf returns -1 if not found
+    if (dateIndex != -1) { // if shift date is found
+        date = collInfo[dateIndex + 1].split("-");
+        date = date[0] + "/" + date[1];
+        console.log('date: ' + date);
+    } else {
+        setWarning("Datum");
+    }
+    startTimeIndex = collInfo.indexOf("Begintijd"); // indexOf returns -1 if not found
+    if (startTimeIndex != -1) { // if starting time is found
+        startTime = collInfo[startTimeIndex + 1];
+        console.log('start time: ' + startTime);
+    } else {
+        setWarning("Begintijd");
+    }
+    endTimeIndex = collInfo.indexOf("Eindtijd"); // indexOf returns -1 if not found
+    if (endTimeIndex != -1) { // if starting time is found
+        endTime = collInfo[endTimeIndex + 1];
+        console.log('end time: ' + endTime);
+    } else {
+        setWarning("Eindtijd");
+    }
+    shiftIndex = collInfo.indexOf("Functie"); // indexOf returns -1 if not found
+    if (shiftIndex != -1) { // if shift name is found
+        shift = collInfo[shiftIndex + 1].split(" ")[1];
+        console.log('shift: ' + shift);
+    } else {
+        setWarning("Functie");
+    }
+    showIndex = collInfo.indexOf("Omschrijving"); // indexOf returns -1 if not found
+    if (showIndex != -1) { // if show name is found
+        show = collInfo[showIndex + 1].split(" ");
+        show.splice(0, 1); // remove HNB or DNO
+        show = show.join(" ");
+        console.log('show: ' + show);
+    } else {
+        setWarning("Voorstelling naam");
+    }
+
+    if (startTime != "" && endTime != "") {
+        time = startTime + "-" + endTime;
+    }
+
+    collNames = [];
+    collStartIndex = collInfo.indexOf("×");
+    if (collStartIndex != -1) {
+        collInfo.splice(0, collStartIndex + 1);
+        var nextIndex = collInfo.indexOf("");
+        while (nextIndex != -1) {
+            let collFunction = collInfo[nextIndex - 1];
+            if (collFunction.toLowerCase().includes("dutymanager")) {
+                nextIndex = collInfo.indexOf("", nextIndex + 1);
+                continue;
+            }
+            let collName = collInfo[nextIndex + 1];
+            if (typeof collName !== 'undefined' && collName != "") {
+                // remove space at the end of the name
+                collName = collName.substring(0, collName.length - 1)
+                collNames.push(collName);
+            }
+            nextIndex = collInfo.indexOf("", nextIndex + 1);
+        }
+    }
+
+    return [date, time, shift, show, collNames];
+}
+
+function emailListToArray(emailList) {
+
+    // Remove symbols from the email list
+    emailListCleaned = emailList.replace(/[<>\;•,\n\t"']/g, ' ').toLowerCase();
+    var emailListarray = emailListCleaned.split(" ");
+
+    var name_email = [];
+    var name = "";
+
+    for (const part of emailListarray) {
+        if (part.includes("@")) {
+            name = name.slice(0, -1); // remove last space
+            name_email.push([name, part]);
+            name = "";
+        }
+        else {
+            if (part != "") {
+                name += part + " ";
+            }
+        }
+    }
+
+    console.log(name_email)
+    return name_email;
+}
+
+function setWarning(warningText, missingColl = false) {
+    var warningBox = document.getElementById("warningBox");
+    var missingInfo = document.getElementById("missingInfo");
+    var missingInfoBox = document.getElementById("missingInfoBox");
+    var missingEmails = document.getElementById("missingEmails");
+    var missingEmailsBox = document.getElementById("missingEmailsBox");
+
+    warningBox.style.display = "block";
+    
+    if (!missingColl) {
+        missingInfoBox.style.display = "block";
+        missingInfo.innerHTML += " - " + warningText + "<br>";
+    } else {
+        missingEmailsBox.style.display = "block";
+        missingEmails.innerHTML += " - " + warningText + "<br>";
+    }
+
+}
+</script>
+
+<style>
+/* .inner-wrapper {
+    margin: 10vw;
+} */
+
+body {
+    padding: 15px;
+    /* background-color: rgb(57, 81, 60); */
+    background-color: #373737;
+    /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    /* font-family: articulat-cf,Helvetica,Arial,sans-serif; */
+    /* color: rgb(48, 70, 70); */
+    color: rgb(76 129 129);
+    /* background: radial-gradient(#648880, #293f50); */
+    background: linear-gradient(to right bottom, #9bc285, #09414a, #000508);
+    /* background: linear-gradient(to right bottom, #648880, #293f50); */
+}
+
+h1 {
+    margin-top: 60px;
+    margin-bottom: 60px;
+    text-align: center;
+}
+
+.inner-wrapper {
+    border-radius: 10px;
+    /* background-color: lightblue; */
+    background-color: #1B1C20;
+    box-shadow: 0 0 50px rgb(7 56 56), inset 0 0 15px;
+    border: 3px solid rgb(76 129 129);
+
+    margin-right: auto; /* 1 */
+    margin-left:  auto; /* 1 */
+
+    max-width: 600px; /* 2 */
+
+    padding-right: 20px; /* 3 */
+    padding-left:  20px; /* 3 */
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.inner-inner-wrapper {
+    margin-right: auto; /* 1 */
+    margin-left:  auto; /* 1 */
+    max-width: 500px; /* 2 */
+}
+
+details p, .warningBox {
+    padding: 15px;
+    border-radius: 10px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: small;
+    box-shadow: inset 0 0 4px rgb(76 129 129);
+    border-width: 2px;
+    /* background-color: lightcyan; */
+    line-height: 1.5em;
+    border: 2px solid rgb(76 129 129);
+}
+
+.content {
+    margin: 0px;
+    padding-top: 15px;
+}
+
+.content p {
+    margin: 0px;
+}
+
+.warningBox {
+    display: none;
+    font-size: small;
+    margin: 10px;
+    border-radius: 10px;
+    background-color: rgb(76 129 129);
+    color: black;
+}
+
+/* .warningBox p {
+    margin: 0px;
+} */
+
+.generatedContent {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+textarea {
+    border-radius: 10px;
+    padding: 10px;
+    border: 2px solid rgb(76 129 129);
+    box-sizing: border-box;
+    resize: vertical;
+    /* background-color: lightcyan; */
+    background-color: #16151A;
+    /* border-color: orange; */
+    border-width: 2px;
+    box-shadow: inset 0 0 15px #080808;
+    color: lightslategray;
+    outline:none;
+}
+
+::placeholder {
+    color: lightslategray;
+}
+
+textarea::-webkit-scrollbar {
+    display: none;
+}
+
+a {
+    color: rgb(76 129 129);
+}
+
+a.external-link-icon {
+    float:right;
+    text-decoration: none;
+    font-size: x-large;
+}
+
+button {
+    margin: 15px;
+    width: 200px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    /* border: 2px solid lightblue; */
+    border: 2px solid rgb(76 129 129);
+    border-radius: 10px;
+    /* color: darkslategray; */
+    color : rgb(76 129 129);
+    /* background-color: lightcyan; */
+    background-color: #16151A;
+    transition-duration: 0.4s;
+    font-size: small;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    box-shadow: inset 0 0 10px #486c6cf9;
+}
+
+button:hover {
+  /* background-color: lightblue; */
+  background-color: rgb(76 129 129);
+  /* color: lightcyan; */
+  color: #000000;
+  /* border: 2px solid lightcyan; */
+  border: 2px solid rgb(104, 174, 133);
+  box-shadow: inset 0 0 15px #85a3c2;
+}
+</style>
+
+<script>
+<!-- functions that don't need touching -->
+
+class Accordion {
+    constructor(el) {
+      // Store the <details> element
+      this.el = el;
+      // Store the <summary> element
+      this.summary = el.querySelector('summary');
+      // Store the <div class="content"> element
+      this.content = el.querySelector('.content');
+  
+      // Store the animation object (so we can cancel it if needed)
+      this.animation = null;
+      // Store if the element is closing
+      this.isClosing = false;
+      // Store if the element is expanding
+      this.isExpanding = false;
+      // Detect user clicks on the summary element
+      this.summary.addEventListener('click', (e) => this.onClick(e));
+    }
+  
+    onClick(e) {
+      // Stop default behaviour from the browser
+      e.preventDefault();
+      // Add an overflow on the <details> to avoid content overflowing
+      this.el.style.overflow = 'hidden';
+      // Check if the element is being closed or is already closed
+      if (this.isClosing || !this.el.open) {
+        this.open();
+      // Check if the element is being openned or is already open
+      } else if (this.isExpanding || this.el.open) {
+        this.shrink();
+      }
+    }
+  
+    shrink() {
+      // Set the element as "being closed"
+      this.isClosing = true;
+      
+      // Store the current height of the element
+      const startHeight = `${this.el.offsetHeight}px`;
+      // Calculate the height of the summary
+      const endHeight = `${this.summary.offsetHeight}px`;
+      
+      // If there is already an animation running
+      if (this.animation) {
+        // Cancel the current animation
+        this.animation.cancel();
+      }
+      
+      // Start a WAAPI animation
+      this.animation = this.el.animate({
+        // Set the keyframes from the startHeight to endHeight
+        height: [startHeight, endHeight]
+      }, {
+        duration: 400,
+        easing: 'ease-out'
+      });
+      
+      // When the animation is complete, call onAnimationFinish()
+      this.animation.onfinish = () => this.onAnimationFinish(false);
+      // If the animation is cancelled, isClosing variable is set to false
+      this.animation.oncancel = () => this.isClosing = false;
+    }
+  
+    open() {
+      // Apply a fixed height on the element
+      this.el.style.height = `${this.el.offsetHeight}px`;
+      // Force the [open] attribute on the details element
+      this.el.open = true;
+      // Wait for the next frame to call the expand function
+      window.requestAnimationFrame(() => this.expand());
+    }
+  
+    expand() {
+      // Set the element as "being expanding"
+      this.isExpanding = true;
+      // Get the current fixed height of the element
+      const startHeight = `${this.el.offsetHeight}px`;
+      // Calculate the open height of the element (summary height + content height)
+      const endHeight = `${this.summary.offsetHeight + this.content.offsetHeight}px`;
+      
+      // If there is already an animation running
+      if (this.animation) {
+        // Cancel the current animation
+        this.animation.cancel();
+      }
+      
+      // Start a WAAPI animation
+      this.animation = this.el.animate({
+        // Set the keyframes from the startHeight to endHeight
+        height: [startHeight, endHeight]
+      }, {
+        duration: 400,
+        easing: 'ease-out'
+      });
+      // When the animation is complete, call onAnimationFinish()
+      this.animation.onfinish = () => this.onAnimationFinish(true);
+      // If the animation is cancelled, isExpanding variable is set to false
+      this.animation.oncancel = () => this.isExpanding = false;
+    }
+  
+    onAnimationFinish(open) {
+      // Set the open attribute based on the parameter
+      this.el.open = open;
+      // Clear the stored animation
+      this.animation = null;
+      // Reset isClosing & isExpanding
+      this.isClosing = false;
+      this.isExpanding = false;
+      // Remove the overflow hidden and the fixed height
+      this.el.style.height = this.el.style.overflow = '';
+    }
+  }
+  
+  document.querySelectorAll('details').forEach((el) => {
+    new Accordion(el);
+  });
+
+</script>
+
+</body>
+</html>
